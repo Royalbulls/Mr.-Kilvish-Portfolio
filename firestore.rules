@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        (request.auth.token.email == "royalbullsadvisory412@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role', 'createdAt']) &&
+             data.uid is string && data.uid == request.auth.uid &&
+             data.email is string &&
+             data.role in ['citizen', 'warrior', 'admin'] &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidSavedContent(data) {
+      return data.keys().hasAll(['id', 'userId', 'type', 'title', 'content', 'timestamp']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.type in ['song', 'report', 'chat', 'arrangement', 'script', 'image', 'transcript', 'intelligence', 'music', 'feedback', 'brand_identity'] &&
+             data.title is string && data.title.size() <= 1000 &&
+             data.content is string && data.content.size() <= 1048576 && // 1MB limit for base64 images
+             (!('tags' in data) || (data.tags is list && data.tags.size() <= 50)) &&
+             data.timestamp is string;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && 
+                    ((request.resource.data.role == 'citizen') || isAdmin());
+      allow update: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && 
+                    ((request.resource.data.role == resource.data.role) || isAdmin()) &&
+                    request.resource.data.createdAt == resource.data.createdAt;
+      
+      match /saved_content/{contentId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidSavedContent(request.resource.data);
+        allow update: if isOwner(userId) && isValidSavedContent(request.resource.data) &&
+                      request.resource.data.timestamp == resource.data.timestamp;
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+    }
+  }
+}

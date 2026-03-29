@@ -1,0 +1,118 @@
+@import "tailwindcss";
+
+@theme {
+  --color-black: var(--bg-color);
+  --color-white: var(--text-color);
+}
+
+:root {
+  --bg-color: #000000;
+  --text-color: #ffffff;
+}
+
+body.light-mode {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+/* Supreme Mode Effects */
+body.supreme-node {
+  background-color: #0a0000;
+  --bg-color: #0a0000;
+  --text-color: #ffffff;
+}
+
+body.supreme-node * {
+  text-shadow: 0 0 1px rgba(220, 38, 38, 0.2);
+}
+
+body.supreme-node .bg-black {
+  background-color: #0a0000;
+}
+
+body.supreme-node .border-white\/5,
+body.supreme-node .border-white\/10 {
+  border-color: rgba(220, 38, 38, 0.2);
+}
+
+body.supreme-node .bg-white\/5 {
+  background-color: rgba(220, 38, 38, 0.05);
+}
+
+body.supreme-node h1,
+body.supreme-node h2,
+body.supreme-node h3 {
+  text-shadow: 0 0 15px rgba(220, 38, 38, 0.5);
+}
+
+body.supreme-node .text-red-500,
+body.supreme-node .text-red-600 {
+  text-shadow: 0 0 20px rgba(220, 38, 38, 0.8);
+}
+
+/* Glitch Effect for Supreme Mode */
+@keyframes glitch {
+  0% { transform: translate(0) }
+  20% { transform: translate(-2px, 2px) }
+  40% { transform: translate(-2px, -2px) }
+  60% { transform: translate(2px, 2px) }
+  80% { transform: translate(2px, -2px) }
+  100% { transform: translate(0) }
+}
+
+body.supreme-node .animate-glitch {
+  animation: glitch 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+body.light-mode ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+body.light-mode ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+body.supreme-node ::-webkit-scrollbar-thumb {
+  background: rgba(220, 38, 38, 0.3);
+}
+
+body.supreme-node ::-webkit-scrollbar-thumb:hover {
+  background: rgba(220, 38, 38, 0.5);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

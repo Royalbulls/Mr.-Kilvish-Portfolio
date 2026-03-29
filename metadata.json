@@ -1,0 +1,5 @@
+{
+  "name": "Mr. Kilvish Portfolio",
+  "description": "The official portfolio and strategic command center of Mr. Kilvish. Featuring AI-powered music generation, global intelligence monitoring, and the transformative Path of Light for soul purification.",
+  "requestFramePermissions": ["microphone"]
+}
