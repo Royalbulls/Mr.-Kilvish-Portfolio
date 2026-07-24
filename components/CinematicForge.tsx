@@ -8,12 +8,14 @@ import Image from 'next/image';
 import { audio } from '@/lib/audio';
 import { useUser } from './UserContext';
 import { useVault } from './VaultContext';
+import { useToast } from './ToastContext';
 import { db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 
 export function CinematicForge() {
   const { firebaseUser } = useUser();
   const { addItem } = useVault();
+  const { showToast } = useToast();
   const [mode, setMode] = useState<'writer' | 'image' | 'director' | 'youtube'>('writer');
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -26,7 +28,7 @@ export function CinematicForge() {
 
   const saveContent = async (type: 'script' | 'image' | 'story', data: string) => {
     if (!firebaseUser) {
-      alert("You must be logged in to save content.");
+      showToast("You must be logged in to save content.", "error");
       return;
     }
     
@@ -38,10 +40,10 @@ export function CinematicForge() {
         content: data,
         tags: ['cinematic-forge']
       });
-      alert("Content saved to The Vault successfully.");
+      showToast("Content saved to The Vault successfully.", "success");
     } catch (err) {
       console.error("Error saving content:", err);
-      alert("Failed to save content.");
+      showToast("Failed to save content.", "error");
     } finally {
       setIsSaving(false);
     }
@@ -301,7 +303,7 @@ export function CinematicForge() {
                       <button 
                         onClick={() => {
                           navigator.clipboard.writeText(sceneScript);
-                          alert("Script copied to clipboard.");
+                          showToast("Script copied to clipboard.", "success");
                         }}
                         className="text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors"
                       >
@@ -336,7 +338,7 @@ export function CinematicForge() {
                       <button 
                         onClick={() => {
                           navigator.clipboard.writeText(directorTreatment);
-                          alert("Treatment copied to clipboard.");
+                          showToast("Treatment copied to clipboard.", "success");
                         }}
                         className="text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors"
                       >
@@ -373,7 +375,7 @@ export function CinematicForge() {
                       <button 
                         onClick={() => {
                           navigator.clipboard.writeText(youtubeStory);
-                          alert("Story copied to clipboard.");
+                          showToast("Story copied to clipboard.", "success");
                         }}
                         className="text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors"
                       >

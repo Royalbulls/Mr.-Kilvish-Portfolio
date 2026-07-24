@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, doc, setDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { useUser } from './UserContext';
+import { useToast } from './ToastContext';
 
 export type VaultItemType = 'song' | 'report' | 'chat' | 'arrangement' | 'script' | 'image' | 'transcript' | 'intelligence' | 'music' | 'feedback' | 'brand_identity' | 'story' | 'lyrics';
 
@@ -30,6 +31,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<VaultItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const { firebaseUser, isAuthReady } = useUser();
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (!isAuthReady) return;
@@ -76,7 +78,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
 
   const addItem = async (item: Omit<VaultItem, 'id' | 'timestamp'>) => {
     if (!firebaseUser) {
-      alert("You must be logged in to save to the Vault.");
+      showToast("You must be logged in to save to the Vault.", "error");
       return;
     }
     
@@ -97,7 +99,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
       await setDoc(doc(db, 'users', firebaseUser.uid, 'saved_content', id), newItem);
     } catch (error) {
       console.error("Error adding item to vault:", error);
-      alert("Failed to save to Vault.");
+      showToast("Failed to save to Vault.", "error");
     }
   };
 

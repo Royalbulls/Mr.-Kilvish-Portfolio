@@ -31,10 +31,11 @@ import { useLanguage } from './LanguageContext';
 import { audio as sfx } from '@/lib/audio';
 import { GoogleGenAI, Type } from '@google/genai';
 import { useVault } from './VaultContext';
+import { useToast } from './ToastContext';
 
 import { LyricGenerator } from './LyricGenerator';
 
-type InstrumentType = 'piano' | 'drums' | 'bass';
+type InstrumentType = 'piano' | 'drums' | 'bass' | 'synth';
 
 interface Clip {
   id: string;
@@ -53,6 +54,9 @@ interface Track {
   color: string;
   reverb: number;
   delay: number;
+  eqLow: number;
+  eqMid: number;
+  eqHigh: number;
   pitch: number;
   vibrato: number;
 }
@@ -88,6 +92,9 @@ export function MusicStudio() {
       color: 'bg-red-500',
       reverb: 30,
       delay: 20,
+      eqLow: 0,
+      eqMid: 0,
+      eqHigh: 0,
       pitch: 0,
       vibrato: 0
     },
@@ -102,6 +109,9 @@ export function MusicStudio() {
       color: 'bg-zinc-500',
       reverb: 10,
       delay: 0,
+      eqLow: 0,
+      eqMid: 0,
+      eqHigh: 0,
       pitch: 0,
       vibrato: 0
     }
@@ -135,44 +145,80 @@ export function MusicStudio() {
   const timerIDRef = useRef<number | null>(null);
 
   // Audio synthesis logic
-  const playSound = useCallback((type: InstrumentType, time: number, volume: number, pan: number, pitch: number, vibrato: number) => {
+  const playSound = useCallback((track: Track, time: number) => {
     if (!audioContextRef.current || isGlobalMuted) return;
     const ctx = audioContextRef.current;
     
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     const panner = ctx.createStereoPanner();
+    
+    // EQ Filters
+    const lowFilter = ctx.createBiquadFilter();
+    lowFilter.type = 'lowshelf';
+    lowFilter.frequency.setValueAtTime(320, time);
+    lowFilter.gain.setValueAtTime(track.eqLow, time);
 
-    panner.pan.setValueAtTime(pan, time);
-    const finalVolume = (masterVolume / 100) * (volume / 100) * 0.2;
+    const midFilter = ctx.createBiquadFilter();
+    midFilter.type = 'peaking';
+    midFilter.frequency.setValueAtTime(1000, time);
+    midFilter.Q.setValueAtTime(1, time);
+    midFilter.gain.setValueAtTime(track.eqMid, time);
+
+    const highFilter = ctx.createBiquadFilter();
+    highFilter.type = 'highshelf';
+    highFilter.frequency.setValueAtTime(3200, time);
+    highFilter.gain.setValueAtTime(track.eqHigh, time);
+
+    // Reverb & Delay (Simulated with simple gain/delay nodes for performance)
+    const delayNode = ctx.createDelay();
+    delayNode.delayTime.setValueAtTime(track.delay / 1000, time);
+    const delayGain = ctx.createGain();
+    delayGain.gain.setValueAtTime(track.delay / 200, time);
+
+    panner.pan.setValueAtTime(track.pan, time);
+    const finalVolume = (masterVolume / 100) * (track.volume / 100) * 0.2;
     gain.gain.setValueAtTime(finalVolume, time);
     gain.gain.exponentialRampToValueAtTime(0.001, time + 0.5);
 
-    osc.connect(gain);
+    osc.connect(lowFilter);
+    lowFilter.connect(midFilter);
+    midFilter.connect(highFilter);
+    highFilter.connect(gain);
     gain.connect(panner);
     panner.connect(ctx.destination);
 
+    // Simple delay feedback
+    if (track.delay > 0) {
+      gain.connect(delayNode);
+      delayNode.connect(delayGain);
+      delayGain.connect(ctx.destination);
+    }
+
     let baseFreq = 440;
-    if (type === 'piano') {
+    if (track.type === 'piano') {
       osc.type = 'triangle';
       baseFreq = 440;
-    } else if (type === 'bass') {
+    } else if (track.type === 'bass') {
       osc.type = 'sine';
       baseFreq = 55;
-    } else if (type === 'drums') {
+    } else if (track.type === 'drums') {
       osc.type = 'square';
       baseFreq = 100;
       osc.frequency.exponentialRampToValueAtTime(40, time + 0.1);
+    } else if (track.type === 'synth') {
+      osc.type = 'sawtooth';
+      baseFreq = 220;
     }
 
-    const bentFreq = baseFreq * Math.pow(2, pitch / 12);
+    const bentFreq = baseFreq * Math.pow(2, track.pitch / 12);
     osc.frequency.setValueAtTime(bentFreq, time);
 
-    if (vibrato > 0) {
+    if (track.vibrato > 0) {
       const lfo = ctx.createOscillator();
       const lfoGain = ctx.createGain();
       lfo.frequency.setValueAtTime(5, time);
-      lfoGain.gain.setValueAtTime(vibrato * 10, time);
+      lfoGain.gain.setValueAtTime(track.vibrato * 10, time);
       lfo.connect(lfoGain);
       lfoGain.connect(osc.frequency);
       lfo.start(time);
@@ -197,7 +243,7 @@ export function MusicStudio() {
           currentStep >= clip.startStep && currentStep < clip.startStep + clip.length
         );
         if (hasClip) {
-          playSound(track.type, nextStepTimeRef.current, track.volume, track.pan, track.pitch, track.vibrato);
+          playSound(track, nextStepTimeRef.current);
         }
       });
 
@@ -233,15 +279,18 @@ export function MusicStudio() {
   const addTrack = (type: InstrumentType) => {
     const newTrack: Track = {
       id: Date.now().toString(),
-      name: type === 'piano' ? 'Void Piano' : type === 'drums' ? 'Dark Drums' : 'Deep Bass',
+      name: type === 'piano' ? 'Void Piano' : type === 'drums' ? 'Dark Drums' : type === 'bass' ? 'Deep Bass' : 'Void Synth',
       type,
       volume: 80,
       pan: 0,
       muted: false,
       clips: [],
-      color: type === 'piano' ? 'bg-red-500' : type === 'drums' ? 'bg-zinc-500' : 'bg-indigo-500',
+      color: type === 'piano' ? 'bg-red-500' : type === 'drums' ? 'bg-zinc-500' : type === 'bass' ? 'bg-indigo-500' : 'bg-purple-500',
       reverb: 20,
       delay: 10,
+      eqLow: 0,
+      eqMid: 0,
+      eqHigh: 0,
       pitch: 0,
       vibrato: 0
     };
@@ -301,11 +350,11 @@ export function MusicStudio() {
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
       
-      const prompt = `Generate a full musical arrangement for 3 tracks: piano, drums, and bass.
+      const prompt = `Generate a full musical arrangement for 4 tracks: piano, drums, bass, and synth.
       Each track should have a 32-step sequence.
       Return a JSON object where keys are track types and values are arrays of step indices (0-31).
       The style should be dark, cinematic, and industrial.
-      Example: { "piano": [0, 8, 16], "drums": [0, 4, 8], "bass": [0, 16] }`;
+      Example: { "piano": [0, 8, 16], "drums": [0, 4, 8], "bass": [0, 16], "synth": [4, 12, 20] }`;
 
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -317,9 +366,10 @@ export function MusicStudio() {
             properties: {
               piano: { type: Type.ARRAY, items: { type: Type.INTEGER } },
               drums: { type: Type.ARRAY, items: { type: Type.INTEGER } },
-              bass: { type: Type.ARRAY, items: { type: Type.INTEGER } }
+              bass: { type: Type.ARRAY, items: { type: Type.INTEGER } },
+              synth: { type: Type.ARRAY, items: { type: Type.INTEGER } }
             },
-            required: ['piano', 'drums', 'bass']
+            required: ['piano', 'drums', 'bass', 'synth']
           }
         }
       });
@@ -345,10 +395,11 @@ export function MusicStudio() {
   };
 
   const { addItem } = useVault();
+  const { showToast } = useToast();
 
   const exportMix = () => {
     sfx.playComplete();
-    alert("Exporting high-quality 24-bit WAV mix... (Simulated)");
+    showToast("Exporting high-quality 24-bit WAV mix... (Simulated)", "info");
   };
 
   const saveArrangementToVault = () => {
@@ -366,7 +417,7 @@ export function MusicStudio() {
       tags: ['music-studio', 'arrangement']
     });
     sfx.playComplete();
-    alert("Musical arrangement archived in the Kilvish Vault.");
+    showToast("Musical arrangement archived in the Kilvish Vault.", "success");
   };
 
   const releaseToPlatforms = async () => {
@@ -378,7 +429,7 @@ export function MusicStudio() {
     
     sfx.playComplete();
     setIsReleasing(false);
-    alert("Autonomous AI Distribution Complete! Album 'Void Anthems' has been released to Spotify, Apple Music, and YouTube Music. Audio footprint updated in Empire Intelligence.");
+    showToast("Autonomous AI Distribution Complete! Album 'Void Anthems' has been released to Spotify, Apple Music, and YouTube Music. Audio footprint updated in Empire Intelligence.", "success");
   };
 
   const toggleRecording = () => {
@@ -637,6 +688,45 @@ export function MusicStudio() {
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                       <div className="space-y-1">
                         <div className="flex justify-between text-[8px] uppercase tracking-tighter text-white/30">
+                          <span>EQ Low</span>
+                          <span>{track.eqLow}dB</span>
+                        </div>
+                        <input 
+                          type="range" 
+                          min="-20" max="20" step="1"
+                          value={track.eqLow}
+                          onChange={(e) => updateTrack(track.id, { eqLow: parseInt(e.target.value) })}
+                          className="w-full h-1 bg-white/10 rounded-full appearance-none accent-red-500"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[8px] uppercase tracking-tighter text-white/30">
+                          <span>EQ Mid</span>
+                          <span>{track.eqMid}dB</span>
+                        </div>
+                        <input 
+                          type="range" 
+                          min="-20" max="20" step="1"
+                          value={track.eqMid}
+                          onChange={(e) => updateTrack(track.id, { eqMid: parseInt(e.target.value) })}
+                          className="w-full h-1 bg-white/10 rounded-full appearance-none accent-amber-500"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[8px] uppercase tracking-tighter text-white/30">
+                          <span>EQ High</span>
+                          <span>{track.eqHigh}dB</span>
+                        </div>
+                        <input 
+                          type="range" 
+                          min="-20" max="20" step="1"
+                          value={track.eqHigh}
+                          onChange={(e) => updateTrack(track.id, { eqHigh: parseInt(e.target.value) })}
+                          className="w-full h-1 bg-white/10 rounded-full appearance-none accent-emerald-500"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[8px] uppercase tracking-tighter text-white/30">
                           <span>Reverb</span>
                           <span>{track.reverb}%</span>
                         </div>
@@ -708,6 +798,10 @@ export function MusicStudio() {
                   <Activity className="w-4 h-4 text-indigo-500" />
                   <span className="text-[8px] uppercase font-bold text-white/40">Bass</span>
                 </button>
+                <button onClick={() => addTrack('synth')} className="p-2 border border-white/10 rounded-lg hover:bg-white/5 transition-colors flex flex-col items-center gap-1">
+                  <Sparkles className="w-4 h-4 text-purple-500" />
+                  <span className="text-[8px] uppercase font-bold text-white/40">Synth</span>
+                </button>
               </div>
             </div>
           </div>
@@ -742,10 +836,10 @@ export function MusicStudio() {
                   <button
                     onClick={() => {
                       sfx.playStart();
-                      alert("Mastering process initiated. Applying Kilvish algorithms to the current arrangement...");
+                      showToast("Mastering process initiated. Applying Kilvish algorithms to the current arrangement...", "loading");
                       setTimeout(() => {
                         sfx.playComplete();
-                        alert("Mastering complete! Your track is now ready for the void.");
+                        showToast("Mastering complete! Your track is now ready for the void.", "success");
                       }, 2000);
                     }}
                     className="w-full py-6 bg-red-600 hover:bg-red-700 text-white font-black tracking-[0.2em] uppercase text-sm transition-all flex items-center justify-center gap-3 rounded-xl shadow-xl shadow-red-900/20"

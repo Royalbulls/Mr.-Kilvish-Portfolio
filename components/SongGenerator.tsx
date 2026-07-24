@@ -1,18 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
-import { Loader2, Music, Sparkles, Copy, Check, Image as ImageIcon, Volume2, Settings2, Zap, Save, Download, X, Video, Shield } from 'lucide-react';
+import { Loader2, Music, Sparkles, Copy, Check, Image as ImageIcon, Volume2, Settings2, Zap, Save, Download, X, Video, Shield, Key, Edit3, Undo, Redo } from 'lucide-react';
 import { useLanguage, LANGUAGES } from '@/components/LanguageContext';
 import { useVault } from './VaultContext';
 import { audio, pcmToWav } from '@/lib/audio';
 import Image from 'next/image';
+import { useToast } from './ToastContext';
 
 import { CustomAudioPlayer } from './CustomAudioPlayer';
 import { GENRES } from '@/lib/genres';
 
 import Link from 'next/link';
+
+// Declare window.aistudio for TypeScript
+declare global {
+  interface Window {
+    aistudio?: {
+      hasSelectedApiKey: () => Promise<boolean>;
+      openSelectKey: () => Promise<void>;
+    };
+  }
+}
 
 interface GeneratedSong {
   songTitle: string;
@@ -29,6 +40,7 @@ interface GeneratedSong {
 export function SongGenerator() {
   const { language, setLanguage, t } = useLanguage();
   const { addItem } = useVault();
+  const { showToast } = useToast();
   const [selectedGenres, setSelectedGenres] = useState<string[]>(['Auto']);
   const [genreSearch, setGenreSearch] = useState('');
   const [referenceSong, setReferenceSong] = useState('');
@@ -47,6 +59,7 @@ export function SongGenerator() {
   const [mediaGenerationStep, setMediaGenerationStep] = useState('');
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
   const [videoGenerationStep, setVideoGenerationStep] = useState('');
+  const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
   const [error, setError] = useState('');
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
@@ -54,11 +67,45 @@ export function SongGenerator() {
   const [trackName, setTrackName] = useState('');
   const [isShaktimaanMode, setIsShaktimaanMode] = useState(false);
 
+  // Lyrics Editing & Undo/Redo States
+  const [isEditingLyrics, setIsEditingLyrics] = useState(false);
+  const [editedLyrics, setEditedLyrics] = useState('');
+  const [history, setHistory] = useState<string[]>([]);
+  const [redoStack, setRedoStack] = useState<string[]>([]);
+  const lastHistoryPush = useRef<number>(0);
+
   useEffect(() => {
+    checkApiKey();
     const initAudio = () => audio.init();
     document.addEventListener('click', initAudio, { once: true });
     return () => document.removeEventListener('click', initAudio);
   }, []);
+
+  const checkApiKey = async () => {
+    if (typeof window !== 'undefined' && window.aistudio) {
+      try {
+        const hasKey = await window.aistudio.hasSelectedApiKey();
+        setHasApiKey(hasKey);
+      } catch (err) {
+        console.error("Error checking API key:", err);
+        setHasApiKey(false);
+      }
+    } else {
+      setHasApiKey(false);
+    }
+  };
+
+  const handleSelectKey = async () => {
+    if (typeof window !== 'undefined' && window.aistudio) {
+      try {
+        await window.aistudio.openSelectKey();
+        setHasApiKey(true);
+        showToast("API Key linked successfully!", "success");
+      } catch (err) {
+        console.error("Error selecting API key:", err);
+      }
+    }
+  };
 
   const handleCopy = async (text: string, field: string) => {
     try {
@@ -98,11 +145,12 @@ export function SongGenerator() {
     setIsGeneratingMedia(true);
     setMediaGenerationStep('Painting the Void (Cover Art)...');
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
+      const apiKeyToUse = process.env.API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY as string;
+      const mediaAi = new GoogleGenAI({ apiKey: apiKeyToUse });
       
       // Generate Cover Art
-      const imagePromise = ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
+      const imagePromise = mediaAi.models.generateContent({
+        model: 'gemini-3.1-flash-image-preview',
         contents: {
           parts: [
             { text: `Dark, cosmic, cinematic album cover art for a song titled "${generatedSong.songTitle}". Style: ${generatedSong.songStyle}. Theme: ${themes}. No text in the image.` }
@@ -116,7 +164,7 @@ export function SongGenerator() {
       const lyricsExcerpt = cleanLyrics.substring(0, 400);
       
       setMediaGenerationStep('Synthesizing the Voice of Darkness (Audio)...');
-      const audioPromise = ai.models.generateContent({
+      const audioPromise = mediaAi.models.generateContent({
         model: "gemini-2.5-flash-preview-tts",
         contents: { parts: [{ text: `Speak in a dark, ominous, commanding voice: ${lyricsExcerpt}` }] },
         config: {
@@ -147,8 +195,12 @@ export function SongGenerator() {
         }
       }
 
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to generate media:", err);
+      if (err.message?.includes('403') || err.message?.includes('permission')) {
+        showToast("Media generation requires a paid API key. Please select one.", "error");
+        setHasApiKey(false);
+      }
     } finally {
       setIsGeneratingMedia(false);
       setMediaGenerationStep('');
@@ -378,6 +430,54 @@ Format the output strictly as JSON. Provide title, style, lyrics, story, chordPr
     }
   };
 
+  const startEditing = () => {
+    if (!song) return;
+    setEditedLyrics(song.songLyrics);
+    setHistory([]);
+    setRedoStack([]);
+    setIsEditingLyrics(true);
+    audio.playClick();
+  };
+
+  const handleLyricsChange = (newVal: string) => {
+    if (newVal === editedLyrics) return;
+    
+    const now = Date.now();
+    // Throttle history saves: save to history every 2 seconds or if change is significant
+    if (now - lastHistoryPush.current > 2000 || Math.abs(newVal.length - editedLyrics.length) > 20) {
+      setHistory(prev => [...prev, editedLyrics]);
+      lastHistoryPush.current = now;
+      setRedoStack([]);
+    }
+    setEditedLyrics(newVal);
+  };
+
+  const undoLyrics = () => {
+    if (history.length === 0) return;
+    const previous = history[history.length - 1];
+    setRedoStack(prev => [...prev, editedLyrics]);
+    setEditedLyrics(previous);
+    setHistory(prev => prev.slice(0, -1));
+    audio.playClick();
+  };
+
+  const redoLyrics = () => {
+    if (redoStack.length === 0) return;
+    const next = redoStack[redoStack.length - 1];
+    setHistory(prev => [...prev, editedLyrics]);
+    setEditedLyrics(next);
+    setRedoStack(prev => prev.slice(0, -1));
+    audio.playClick();
+  };
+
+  const saveEdits = () => {
+    if (!song) return;
+    setSong({ ...song, songLyrics: editedLyrics });
+    setIsEditingLyrics(false);
+    showToast("Lyrics updated successfully!", "success");
+    audio.playComplete();
+  };
+
   const initiateSave = () => {
     if (!song) return;
     setTrackName(song.songTitle);
@@ -401,7 +501,7 @@ Format the output strictly as JSON. Provide title, style, lyrics, story, chordPr
     });
     audio.playComplete();
     setIsSaving(false);
-    alert('Track saved to The Kilvish Vault!');
+    showToast('Track saved to The Kilvish Vault!', "success");
   };
 
   const cancelSave = () => {
@@ -618,6 +718,16 @@ Format the output strictly as JSON. Provide title, style, lyrics, story, chordPr
                 </>
               )}
             </button>
+
+            {hasApiKey === false && (
+              <button
+                onClick={handleSelectKey}
+                className="w-full py-3 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/50 text-amber-400 rounded-xl text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+              >
+                <Key className="w-4 h-4 text-amber-500" />
+                Select Paid API Key for Media
+              </button>
+            )}
           </div>
 
           <div className="relative">
@@ -870,19 +980,71 @@ Format the output strictly as JSON. Provide title, style, lyrics, story, chordPr
                     <div className="flex items-start justify-between gap-4 mb-4">
                       <p className="text-xs font-bold uppercase tracking-widest text-red-500">{t('lyrics')}</p>
                       <div className="flex gap-2">
-                        <Link 
-                          href="/lyrics"
-                          className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white transition-all flex items-center gap-2"
-                        >
-                          <Sparkles className="w-3 h-3 text-amber-500" />
-                          Refine in Lyric Lab
-                        </Link>
+                        {isEditingLyrics ? (
+                          <>
+                            <button
+                              onClick={undoLyrics}
+                              disabled={history.length === 0}
+                              className="p-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/60 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                              title="Undo"
+                            >
+                              <Undo className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={redoLyrics}
+                              disabled={redoStack.length === 0}
+                              className="p-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/60 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                              title="Redo"
+                            >
+                              <Redo className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={saveEdits}
+                              className="px-3 py-1.5 bg-red-600/20 hover:bg-red-600/30 border border-red-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest text-red-500 transition-all flex items-center gap-2"
+                            >
+                              <Save className="w-3 h-3" />
+                              Save
+                            </button>
+                            <button
+                              onClick={() => { setIsEditingLyrics(false); audio.playClick(); }}
+                              className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-white/60 transition-all flex items-center gap-2"
+                            >
+                              <X className="w-3 h-3" />
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={startEditing}
+                              className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white transition-all flex items-center gap-2"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                              Edit Lyrics
+                            </button>
+                            <Link 
+                              href="/lyrics"
+                              className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white transition-all flex items-center gap-2"
+                            >
+                              <Sparkles className="w-3 h-3 text-amber-500" />
+                              Refine in Lyric Lab
+                            </Link>
+                          </>
+                        )}
                         <CopyButton text={song.songLyrics} field="lyrics" />
                       </div>
                     </div>
-                    <div className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-white/80">
-                      {song.songLyrics}
-                    </div>
+                    {isEditingLyrics ? (
+                      <textarea
+                        value={editedLyrics}
+                        onChange={(e) => handleLyricsChange(e.target.value)}
+                        className="w-full h-96 bg-black/50 border border-white/10 p-4 text-sm font-mono leading-relaxed text-white focus:outline-none focus:border-red-500/50 rounded-xl resize-none"
+                      />
+                    ) : (
+                      <div className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-white/80">
+                        {song.songLyrics}
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : isGenerating ? (

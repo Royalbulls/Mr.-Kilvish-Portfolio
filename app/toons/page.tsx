@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { audio } from '@/lib/audio';
+import { useToast } from '@/components/ToastContext';
 
 interface ToonArtwork {
   id: string;
@@ -51,6 +52,7 @@ export default function KilvishToonsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [comics, setComics] = useState<ComicStrip[]>([]);
+  const { showToast } = useToast();
   const [artworks, setArtworks] = useState<ToonArtwork[]>([
     {
       id: '1',
@@ -385,7 +387,7 @@ export default function KilvishToonsPage() {
       }
     } else {
       navigator.clipboard.writeText(`${artwork.caption}\n\n${artwork.story}`);
-      alert('Story copied to clipboard!');
+      showToast('Story copied to clipboard!', "success");
     }
   };
 

@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useUser } from './UserContext';
+import { useToast } from './ToastContext';
 import { User, Shield, Lock, Unlock, LogOut, Edit3, Save, X, Sparkles, Crosshair, Skull } from 'lucide-react';
 import { audio } from '@/lib/audio';
 
 export function UserProfile() {
   const { user, isAuthReady, login, signup, loginWithGoogle, logout, updateProfile, createPersona } = useUser();
+  const { showToast } = useToast();
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,7 +27,7 @@ export function UserProfile() {
       await loginWithGoogle();
     } catch (error) {
       console.error('OAuth error:', error);
-      alert('Failed to initiate Google Login.');
+      showToast('Failed to initiate Google Login.', "error");
     }
   };
 
@@ -39,7 +41,7 @@ export function UserProfile() {
         await signup(email, password, username || email.split('@')[0]);
       }
     } catch (error: any) {
-      alert(error.message || "Authentication failed.");
+      showToast(error.message || "Authentication failed.", "error");
     }
   };
 

@@ -35,6 +35,26 @@ service cloud.firestore {
              data.timestamp is string;
     }
 
+    function isValidCitizen(data) {
+      return data.keys().hasAll(['uid', 'fullName', 'dob', 'registrationDate']) &&
+             data.uid is string && data.uid == request.auth.uid &&
+             data.fullName is string && data.fullName.size() > 0 && data.fullName.size() <= 100 &&
+             data.dob is string && data.dob.size() > 0 &&
+             data.registrationDate is string &&
+             (!('bloodGroup' in data) || (data.bloodGroup is string && data.bloodGroup.size() <= 5)) &&
+             (!('rank' in data) || (data.rank is string && data.rank.size() <= 50)) &&
+             (!('qrData' in data) || (data.qrData is string && data.qrData.size() <= 1000)) &&
+             (!('photoData' in data) || (data.photoData is string && data.photoData.size() <= 1048576));
+    }
+
+    match /citizens/{citizenId} {
+      allow read: if isOwner(citizenId) || isAdmin();
+      allow create: if isAuthenticated() && isOwner(citizenId) && isValidCitizen(request.resource.data);
+      allow update: if isAuthenticated() && isOwner(citizenId) && isValidCitizen(request.resource.data) &&
+                    request.resource.data.registrationDate == resource.data.registrationDate;
+      allow delete: if isAdmin();
+    }
+
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && 

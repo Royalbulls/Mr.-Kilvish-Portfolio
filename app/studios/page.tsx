@@ -13,6 +13,7 @@ import {
   Download
 } from 'lucide-react';
 import { audio } from '@/lib/audio';
+import { useToast } from '@/components/ToastContext';
 
 // Declare window.aistudio for TypeScript
 declare global {
@@ -31,6 +32,7 @@ export default function KilvishStudiosPage() {
   const [error, setError] = useState('');
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     checkApiKey();
@@ -61,7 +63,7 @@ export default function KilvishStudiosPage() {
         console.error("Error selecting API key:", err);
       }
     } else {
-      alert("API Key selection is only available within the AI Studio environment.");
+      showToast("API Key selection is only available within the AI Studio environment.", "info");
     }
   };
 

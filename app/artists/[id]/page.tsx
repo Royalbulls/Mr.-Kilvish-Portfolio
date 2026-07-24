@@ -162,6 +162,35 @@ export default function ArtistProfilePage() {
             </p>
           </section>
 
+          {/* Musical Influences */}
+          {artist.musicalInfluences && (
+            <section className="p-8 rounded-2xl border border-white/5 bg-white/[0.02] space-y-4">
+              <h2 className="text-sm font-black uppercase tracking-widest text-white/40">Musical Influences</h2>
+              <div className="flex flex-wrap gap-2">
+                {artist.musicalInfluences.map((influence, i) => (
+                  <span key={i} className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs font-bold text-white/60">
+                    {influence}
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Career Achievements */}
+          {artist.careerAchievements && (
+            <section className="p-8 rounded-2xl border border-white/5 bg-white/[0.02] space-y-4">
+              <h2 className="text-sm font-black uppercase tracking-widest text-white/40">Career Achievements</h2>
+              <ul className="space-y-3">
+                {artist.careerAchievements.map((achievement, i) => (
+                  <li key={i} className="flex gap-3 text-sm text-white/70">
+                    <span className="text-red-500 font-black">•</span>
+                    {achievement}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           {/* Tour Dates */}
           <section className="space-y-6">
             <h2 className="text-xl font-black uppercase tracking-widest flex items-center gap-3">

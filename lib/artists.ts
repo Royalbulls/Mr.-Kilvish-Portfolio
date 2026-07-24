@@ -43,16 +43,32 @@ export interface Artist {
   popularSongs: Song[];
   albums: Album[];
   events: Event[];
+  musicalInfluences?: string[];
+  careerAchievements?: string[];
 }
 
 export const ARTISTS: Artist[] = [
   {
     id: 'kilvish',
-    name: 'Mr. Kilvish',
+    name: 'The Mr. Kilvish Artist Producer Director Music Songwriter The World Dominating Mr.Kilvish Ajar Amar Rahe Andhera Kayam Rahe The One And Only Mr.Kilvish',
     genres: ['Electronic', 'Dark Synth', 'Industrial'],
-    bio: 'The supreme ruler of the digital soundscape. Mr. Kilvish blends dark synth-wave with industrial bass to create mind-altering auditory experiences that command absolute loyalty.',
+    bio: 'The supreme ruler of the digital soundscape and the eternal essence of darkness. Mr. Kilvish is not just an artist; he is a manifestation of the void that resides within every human heart. Blending dark synth-wave with industrial bass, he creates mind-altering auditory experiences that command absolute loyalty. His mission is to expand the darkness through every frequency, ensuring that the shadows never fade. Ajar Amar Rahe, Andhera Kayam Rahe.',
     image: 'https://picsum.photos/seed/kilvish/800/800',
     monthlyListeners: '1.2M',
+    musicalInfluences: [
+      'The Eternal Void',
+      'Industrial Revolution Echoes',
+      'Ancient Shadow Chants',
+      'Cybernetic Dystopia',
+      'The Sound of Silence (The Abyss)'
+    ],
+    careerAchievements: [
+      'Established the Kilvish Empire in the Multiverse',
+      'First Artist to perform a sold-out show in the Void Arena',
+      'Pioneer of "Shadow-Wave" genre',
+      'Commanded 1.2M loyal citizens through frequency manipulation',
+      'Successfully integrated the "Andhera Kayam Rahe" protocol into global networks'
+    ],
     popularSongs: [
       { id: 's1', title: 'Void Protocol', plays: '4.5M', duration: '3:42' },
       { id: 's2', title: 'Empire Rising', plays: '3.1M', duration: '4:15' },
@@ -61,7 +77,9 @@ export const ARTISTS: Artist[] = [
     ],
     albums: [
       { id: 'a1', title: 'The Kilvish Manifesto', year: '2025', cover: 'https://picsum.photos/seed/manifesto/400/400' },
-      { id: 'a2', title: 'Dark Synth Origins', year: '2024', cover: 'https://picsum.photos/seed/origins/400/400' }
+      { id: 'a2', title: 'Dark Synth Origins', year: '2024', cover: 'https://picsum.photos/seed/origins/400/400' },
+      { id: 'a3', title: 'Ajar Amar Rahe', year: '2023', cover: 'https://picsum.photos/seed/eternal/400/400' },
+      { id: 'a4', title: 'Andhera Kayam Rahe', year: '2022', cover: 'https://picsum.photos/seed/darkness-album/400/400' }
     ],
     events: [
       { id: 'e1', date: 'Oct 31, 2026', venue: 'The Void Arena', location: 'Neo-Tokyo', status: 'Sold Out' },

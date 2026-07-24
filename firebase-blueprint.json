@@ -14,6 +14,22 @@
       },
       "required": ["uid", "email", "role", "createdAt"]
     },
+    "Citizen": {
+      "title": "Citizen",
+      "description": "A citizen of the Kilvish Empire.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique ID of the citizen (Firebase Auth UID)." },
+        "fullName": { "type": "string", "description": "The full name of the citizen." },
+        "dob": { "type": "string", "description": "Date of birth." },
+        "bloodGroup": { "type": "string", "description": "Blood group." },
+        "rank": { "type": "string", "description": "Rank in the Kilvish Empire." },
+        "registrationDate": { "type": "string", "format": "date-time", "description": "Date of registration." },
+        "qrData": { "type": "string", "description": "Data encoded in the QR code." },
+        "photoData": { "type": "string", "description": "Base64 encoded photo of the citizen." }
+      },
+      "required": ["uid", "fullName", "dob", "registrationDate"]
+    },
     "SavedContent": {
       "title": "Saved Content",
       "description": "Content generated and saved by the user.",
@@ -38,6 +54,10 @@
     "users/{userId}/saved_content/{contentId}": {
       "schema": { "$ref": "#/entities/SavedContent" },
       "description": "Content saved by the user."
+    },
+    "citizens/{citizenId}": {
+      "schema": { "$ref": "#/entities/Citizen" },
+      "description": "Collection of citizens in the Kilvish Empire."
     }
   }
 }

@@ -14,7 +14,8 @@ import {
   ChevronRight,
   Plus,
   UserCheck,
-  Crosshair
+  Crosshair,
+  Sparkles
 } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -91,6 +92,9 @@ export default function EmpireBuilding() {
         </div>
         
         <div className="flex gap-4">
+          <Link href="/inner-dominion" className="px-6 py-3 bg-red-600/10 hover:bg-red-600/20 border border-red-600/30 text-red-500 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2">
+            <Eye className="w-4 h-4" /> Inner Dominion
+          </Link>
           <Link href="/citizenship" className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2">
             <UserCheck className="w-4 h-4" /> Issue ID Cards
           </Link>
@@ -126,36 +130,59 @@ export default function EmpireBuilding() {
       </div>
 
       {/* Persona Section */}
-      <div className="bg-gradient-to-br from-red-950/20 to-black border border-red-900/30 rounded-3xl p-8 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay" />
-        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-red-600/20 border border-red-500/30 flex items-center justify-center shrink-0">
-              <Shield className="w-8 h-8 text-red-500" />
+      <div className="grid md:grid-cols-2 gap-8">
+        <div className="bg-gradient-to-br from-red-950/20 to-black border border-red-900/30 rounded-3xl p-8 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay" />
+          <div className="relative z-10 flex flex-col justify-between h-full gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-red-600/20 border border-red-500/30 flex items-center justify-center shrink-0">
+                <Shield className="w-8 h-8 text-red-500" />
+              </div>
+              <div>
+                <h2 className="text-xl font-black uppercase tracking-widest text-white">Imperial Status</h2>
+                {user?.persona ? (
+                  <p className="text-sm text-white/60 mt-1">
+                    Operative <span className="text-red-500 font-bold">{user.persona.name}</span> • Rank: {user.persona.rank}
+                  </p>
+                ) : (
+                  <p className="text-sm text-white/60 mt-1">You have not yet forged your identity within the Empire.</p>
+                )}
+              </div>
             </div>
             <div>
-              <h2 className="text-xl font-black uppercase tracking-widest text-white">Your Imperial Status</h2>
               {user?.persona ? (
-                <p className="text-sm text-white/60 mt-1">
-                  Operative <span className="text-red-500 font-bold">{user.persona.name}</span> • Rank: {user.persona.rank}
-                </p>
+                <Link href="/profile" className="px-6 py-3 bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 text-red-400 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all flex items-center gap-2">
+                  <Crosshair className="w-4 h-4" /> View Directives
+                </Link>
               ) : (
-                <p className="text-sm text-white/60 mt-1">You have not yet forged your identity within the Empire.</p>
+                <Link href="/profile" className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-[0_0_20px_rgba(220,38,38,0.3)]">
+                  Forge Persona
+                </Link>
               )}
             </div>
           </div>
-          <div>
-            {user?.persona ? (
-              <Link href="/profile" className="px-6 py-3 bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 text-red-400 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all flex items-center gap-2">
-                <Crosshair className="w-4 h-4" /> View Directives
-              </Link>
-            ) : (
-              <Link href="/profile" className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-[0_0_20px_rgba(220,38,38,0.3)]">
-                Forge Persona
-              </Link>
-            )}
-          </div>
         </div>
+
+        <Link href="/inner-dominion" className="group block">
+          <div className="h-full bg-zinc-950 border border-white/5 rounded-3xl p-8 relative overflow-hidden hover:border-red-500/30 transition-all">
+            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-20 transition-opacity">
+              <Eye className="w-32 h-32 text-white" />
+            </div>
+            <div className="relative z-10 space-y-4">
+              <div className="flex items-center gap-2 text-red-500">
+                <Sparkles className="w-4 h-4" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Deeper Reflection</span>
+              </div>
+              <h2 className="text-xl font-black uppercase tracking-widest text-white">The Inner Dominion</h2>
+              <p className="text-sm text-white/40 leading-relaxed max-w-xs">
+                “Kilvishtan” is not a place on any map. It is the realm within you—the kingdom of awareness.
+              </p>
+              <div className="pt-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/20 group-hover:text-red-500 transition-colors">
+                Enter the Silent Kingdom <ChevronRight className="w-3 h-3" />
+              </div>
+            </div>
+          </div>
+        </Link>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">

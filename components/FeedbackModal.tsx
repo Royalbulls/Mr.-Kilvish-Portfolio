@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, MessageSquare, Send, Loader2 } from 'lucide-react';
 import { useVault } from './VaultContext';
+import { useToast } from './ToastContext';
 
 interface FeedbackModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { addItem } = useVault();
+  const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,9 +39,10 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
       setTitle('');
       setDescription('');
       onClose();
+      showToast('Feedback submitted successfully!', "success");
     } catch (error) {
       console.error('Error submitting feedback:', error);
-      alert('Failed to submit feedback. Please try again.');
+      showToast('Failed to submit feedback. Please try again.', "error");
     } finally {
       setIsSubmitting(false);
     }

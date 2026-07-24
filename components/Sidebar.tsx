@@ -29,7 +29,8 @@ import {
   BookOpen,
   Newspaper,
   Sun,
-  Palette
+  Palette,
+  Heart
 } from 'lucide-react';
 import { useLanguage } from './LanguageContext';
 import { useState, useEffect } from 'react';
@@ -43,6 +44,7 @@ export function Sidebar() {
   const [lightMode, setLightMode] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const { user } = useUser();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (supremeMode) {
@@ -80,6 +82,7 @@ export function Sidebar() {
     { name: t('navMusic'), href: '/music', icon: Music },
     { name: 'Studio', href: '/studio', icon: Settings2 },
     { name: 'Generator', href: '/generator', icon: Wand2 },
+    { name: 'Romantic Hub', href: '/romantic-hub', icon: Heart },
     { name: 'Brand Identity', href: '/brand-identity', icon: Palette },
     { name: t('navFilms'), href: '/films', icon: Film },
     { name: 'Aesthetic Guide', href: '/aesthetic-guide', icon: Palette },
@@ -177,60 +180,114 @@ export function Sidebar() {
       </aside>
 
       {/* Mobile Navigation Bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-xl border-t border-white/10 z-50 px-4 py-2 flex items-center justify-between overflow-x-auto scrollbar-hide">
-        <div className="flex items-center gap-2">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-xl border-t border-white/10 z-50 px-4 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/"
+            className={`p-3 rounded-xl transition-all ${
+              pathname === '/' 
+                ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' 
+                : 'text-white/40 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Home className="w-5 h-5" />
+          </Link>
+          <Link
+            href="/intelligence"
+            className={`p-3 rounded-xl transition-all ${
+              pathname === '/intelligence' 
+                ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' 
+                : 'text-white/40 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Globe className="w-5 h-5" />
+          </Link>
+          <Link
+            href="/studio"
+            className={`p-3 rounded-xl transition-all ${
+              pathname === '/studio' 
+                ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' 
+                : 'text-white/40 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Settings2 className="w-5 h-5" />
+          </Link>
+        </div>
+
+        <button
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="p-3 rounded-xl bg-white/5 text-white/40 hover:bg-white/10 hover:text-white transition-all"
+        >
+          <LayoutDashboard className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Mobile Menu Overlay */}
+      <motion.div
+        initial={false}
+        animate={isMobileMenuOpen ? { opacity: 1, x: 0 } : { opacity: 0, x: '100%' }}
+        className={`fixed inset-0 bg-black z-[60] lg:hidden flex flex-col ${isMobileMenuOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
+      >
+        <div className="p-6 flex items-center justify-between border-b border-white/10">
+          <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-black uppercase tracking-tighter">
+            Mr. <span className="text-red-600">Kilvish</span>
+          </Link>
+          <button 
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="p-2 rounded-lg bg-white/5 text-white/40"
+          >
+            <Zap className="w-6 h-6 rotate-90" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-2">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`p-3 rounded-xl transition-all flex-shrink-0 ${
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-4 px-4 py-4 rounded-xl text-sm font-bold uppercase tracking-widest transition-all ${
                   isActive 
                     ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' 
                     : 'text-white/40 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <item.icon className="w-5 h-5" />
+                <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-white/20'}`} />
+                {item.name}
               </Link>
             );
           })}
         </div>
-        <div className="flex items-center gap-2 ml-2">
-          <button
-            onClick={() => setIsFeedbackOpen(true)}
-            className="p-3 rounded-xl transition-all flex-shrink-0 bg-white/5 text-white/40 hover:bg-white/10 hover:text-white"
-          >
-            <MessageSquare className="w-5 h-5" />
-          </button>
+
+        <div className="p-6 border-t border-white/10 grid grid-cols-2 gap-4">
           <button
             onClick={() => {
               setLightMode(!lightMode);
               if (!lightMode) setSupremeMode(false);
             }}
-            className={`p-3 rounded-xl transition-all flex-shrink-0 ${
-              lightMode 
-                ? 'bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.5)]' 
-                : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'
+            className={`flex items-center justify-center gap-2 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+              lightMode ? 'bg-white text-black' : 'bg-white/5 text-white/40'
             }`}
           >
-            <Sun className="w-5 h-5" />
+            <Sun className="w-4 h-4" />
+            Light
           </button>
           <button
             onClick={() => {
               setSupremeMode(!supremeMode);
               if (!supremeMode) setLightMode(false);
             }}
-            className={`p-3 rounded-xl transition-all flex-shrink-0 ${
-              supremeMode 
-                ? 'bg-white text-red-600 shadow-[0_0_20px_rgba(220,38,38,0.5)] animate-pulse' 
-                : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'
+            className={`flex items-center justify-center gap-2 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+              supremeMode ? 'bg-red-600 text-white' : 'bg-white/5 text-white/40'
             }`}
           >
-            <Zap className="w-5 h-5" />
+            <Zap className="w-4 h-4" />
+            Supreme
           </button>
         </div>
-      </div>
+      </motion.div>
 
       <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
     </>

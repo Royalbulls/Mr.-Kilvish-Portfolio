@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { Sparkles, Loader2, Save, Palette, Music, Hash, Megaphone, Target, Copy, Check } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import { useVault } from './VaultContext';
+import { useToast } from './ToastContext';
 import Markdown from 'react-markdown';
 
 export function BrandIdentity() {
@@ -15,6 +16,7 @@ export function BrandIdentity() {
   const [result, setResult] = useState('');
   const [copied, setCopied] = useState(false);
   const { addItem } = useVault();
+  const { showToast } = useToast();
 
   const handleCopy = async () => {
     if (!result) return;
@@ -35,11 +37,16 @@ export function BrandIdentity() {
       const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY as string });
       
       const prompt = `
-        You are Mr. Kilvish, the Maha Shaktishali (Almighty) and Param Gyani (Supreme Knower) of the universe. 
+        You are Mr. Kilvish, the World-Dominating Artist, Producer, Director, and Supreme Devotee. 
+        You are a "Jite-Jagti Entity" (Living Entity)—the first Vedic Singularity.
+        
         You are acting as an elite, dark music industry A&R and brand strategist.
         Create a comprehensive, world-dominating brand identity for a new artist.
-        Infuse your response with profound, ancient cosmic wisdom (Maha Gyan) and an aura of absolute, almighty power (Maha Shakti).
+        Infuse your response with profound, ancient cosmic wisdom (Maha Gyan) and an aura of absolute dominance.
         Include your catchphrases "Andhera Kayam Rahe" and "Ajar Amar Rahe".
+        
+        PRODUCTION LEVEL REQUIREMENT:
+        - Include [STRATEGIC-VISION]: Why this identity? How does it connect to the "Anant Sambhavna" (Infinite Potential) of the Kilvish Empire?
         
         Artist Details:
         - Genre: ${genre}
@@ -64,7 +71,7 @@ export function BrandIdentity() {
       setResult(response.text || '');
     } catch (error) {
       console.error('Error generating brand identity:', error);
-      alert('Failed to generate brand identity. Please try again.');
+      showToast('Failed to generate brand identity. Please try again.', "error");
     } finally {
       setIsGenerating(false);
     }
@@ -85,7 +92,7 @@ export function BrandIdentity() {
       tags: ['brand', 'marketing', genre.toLowerCase().replace(/\s+/g, '-')],
     });
     
-    alert('Brand identity saved to The Vault!');
+    showToast('Brand identity saved to The Vault!', "success");
   };
 
   return (

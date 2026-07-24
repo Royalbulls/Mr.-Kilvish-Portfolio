@@ -22,7 +22,8 @@ import {
   Sun,
   Palette,
   Target,
-  Youtube
+  Youtube,
+  Heart
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -56,7 +57,7 @@ export default function Home() {
     },
     { 
       name: 'Empire Building', 
-      desc: 'Strategic planning and resource management.', 
+      desc: 'Outer construction of power and the inner dominion of awareness.', 
       href: '/empire-building', 
       icon: Shield,
       color: 'from-amber-600 to-red-900'
@@ -160,6 +161,13 @@ export default function Home() {
       color: 'from-red-600 to-black'
     },
     { 
+      name: 'Romantic Song Hub', 
+      desc: 'Compose beautiful, emotionally resonant love songs.', 
+      href: '/romantic-hub', 
+      icon: Heart,
+      color: 'from-pink-600 to-rose-900'
+    },
+    { 
       name: 'Brand Identity', 
       desc: 'Develop artist names, taglines, social content, and marketing plans.', 
       href: '/brand-identity', 
@@ -169,9 +177,9 @@ export default function Home() {
   ];
 
   return (
-    <div className="p-8 md:p-12 space-y-12">
+    <div className="p-4 sm:p-8 md:p-12 space-y-12">
       {/* Hero Section */}
-      <section className="relative rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-br from-red-950/20 to-black p-12 md:p-20">
+      <section className="relative rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-br from-red-950/20 to-black p-6 sm:p-12 md:p-20">
         <div className="relative z-10 max-w-3xl space-y-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -186,7 +194,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.85] uppercase"
+            className="text-4xl sm:text-6xl md:text-8xl font-black tracking-tighter leading-[0.85] uppercase"
           >
             Welcome to the
             <br />

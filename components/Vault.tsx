@@ -172,6 +172,7 @@ export function Vault() {
                 placeholder="Search the archives..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                suppressHydrationWarning
                 className="bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-red-500/50 w-full sm:w-64"
               />
             </div>

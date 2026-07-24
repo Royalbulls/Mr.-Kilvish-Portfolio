@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '@/components/LanguageContext';
 import { useVault } from './VaultContext';
+import { useToast } from './ToastContext';
 import { audio } from '@/lib/audio';
 
 interface LyricSection {
@@ -44,6 +45,7 @@ interface GeneratedLyrics {
 export function LyricGenerator() {
   const { t } = useLanguage();
   const { addItem } = useVault();
+  const { showToast } = useToast();
   
   const [theme, setTheme] = useState('');
   const [keywords, setKeywords] = useState('');
@@ -160,7 +162,7 @@ export function LyricGenerator() {
         tags: ['ai-lyrics', emotion.toLowerCase(), poeticStyle.toLowerCase()]
       });
       audio.playComplete();
-      alert('Lyrics archived in the Kilvish Vault.');
+      showToast('Lyrics archived in the Kilvish Vault.', "success");
     } catch (err) {
       console.error('Failed to save lyrics:', err);
     } finally {

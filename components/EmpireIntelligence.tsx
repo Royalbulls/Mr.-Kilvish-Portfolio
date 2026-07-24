@@ -30,12 +30,25 @@ import {
   Shield,
   Sword,
   Ghost,
-  Cpu
+  Cpu,
+  Activity,
+  BarChart3,
+  Fingerprint,
+  Eye,
+  AlertTriangle,
+  Map,
+  Gauge,
+  Smile,
+  Frown,
+  Terminal,
+  Radio,
+  Zap as SparkIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { audio, pcmToWav } from '@/lib/audio';
 import { useLanguage } from './LanguageContext';
 import { useVault } from './VaultContext';
+import { useToast } from './ToastContext';
 import { CustomAudioPlayer } from './CustomAudioPlayer';
 import { useUser } from './UserContext';
 import { db } from '@/lib/firebase';
@@ -46,6 +59,44 @@ interface IntelligenceReport {
     headline: string;
     impact: string;
     relevanceToEmpire: string;
+  }[];
+  socialMediaTrends: {
+    platform: string;
+    topic: string;
+    viralPotential: string;
+    audienceBehavior: string;
+  }[];
+  marketTrends: {
+    asset: string;
+    trend: string;
+    prediction: string;
+  }[];
+  threatAssessment: {
+    type: string;
+    description: string;
+    riskLevel: 'low' | 'medium' | 'high' | 'critical';
+    suspiciousActivity: string;
+  }[];
+  aiAnalysis: {
+    viralPatterns: string;
+    anomaliesDetected: string;
+    behavioralInsights: string;
+  };
+  mlLayer: {
+    faceRecognitionSim: string;
+    predictionModel: string;
+  };
+  opportunityScoring: {
+    category: string;
+    score: number;
+    rationale: string;
+  }[];
+  liveSignals: string[];
+  kilvishstanProgress: number;
+  sentimentAnalysis: {
+    topic: string;
+    score: number;
+    trend: 'up' | 'down' | 'stable';
   }[];
   mediaMonitoring: {
     news: string[];
@@ -58,6 +109,7 @@ interface IntelligenceReport {
     contentIdeas: string[];
     monetizationPath: string;
   };
+  viralHooks: string[];
   businessOpportunities: {
     trends: string[];
     revenueIdeas: string[];
@@ -95,6 +147,37 @@ export function EmpireIntelligence() {
   const [isReadingReport, setIsReadingReport] = useState(false);
   const [reportAudioUrl, setReportAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [systemLogs, setSystemLogs] = useState<string[]>([]);
+  const [isAutoSurveillance, setIsAutoSurveillance] = useState(false);
+
+  const addLog = (msg: string) => {
+    setSystemLogs(prev => [msg, ...prev].slice(0, 50));
+  };
+
+  useEffect(() => {
+    if (isAnalyzing) {
+      const logs = [
+        "Initializing Neural Link...",
+        "Connecting to Global Satellite Array...",
+        "Bypassing Firewalls...",
+        "Scraping Social Media Trends...",
+        "Analyzing Market Volatility...",
+        "Detecting Viral Patterns...",
+        "Calculating Opportunity Scores...",
+        "Synthesizing Strategic Advice..."
+      ];
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i < logs.length) {
+          addLog(`[SYSTEM] ${logs[i]}`);
+          i++;
+        } else {
+          clearInterval(interval);
+        }
+      }, 1500);
+      return () => clearInterval(interval);
+    }
+  }, [isAnalyzing]);
 
   const generatePodcast = async () => {
     if (!report) return;
@@ -152,6 +235,7 @@ export function EmpireIntelligence() {
   };
 
   const { addItem } = useVault();
+  const { showToast } = useToast();
 
   const saveReportToVault = () => {
     if (!report) return;
@@ -162,7 +246,7 @@ export function EmpireIntelligence() {
       tags: ['intelligence', 'global-scan']
     });
     audio.playComplete();
-    alert("Intelligence Report archived in the Kilvish Vault.");
+    showToast("Intelligence Report archived in the Kilvish Vault.", "success");
   };
 
   const readFullReport = async () => {
@@ -273,6 +357,22 @@ export function EmpireIntelligence() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chat]);
 
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isAutoSurveillance) {
+      addLog("[SYSTEM] Auto-Surveillance Mode: ACTIVE");
+      // Run analysis every 30 minutes (simulated for UI, but we can trigger once now)
+      runIntelligenceAnalysis();
+      interval = setInterval(() => {
+        runIntelligenceAnalysis();
+        addLog("[SYSTEM] Periodic Global Scan Initiated...");
+      }, 1800000); 
+    } else {
+      addLog("[SYSTEM] Auto-Surveillance Mode: STANDBY");
+    }
+    return () => clearInterval(interval);
+  }, [isAutoSurveillance]);
+
   const runIntelligenceAnalysis = async () => {
     setIsAnalyzing(true);
     setError(null);
@@ -287,13 +387,21 @@ export function EmpireIntelligence() {
       - Mission: To reach 1000+ subscribers and manifest global dominance.
       
       Tasks:
-      1. Use Google Search to aggregate real-time global news and events. Identify 3 major global events happening right now and explain their impact and relevance to Mr. Kilvish's strategic interests.
-      2. Monitor the media for news about "Mr. Kilvish" and analyze the current state of the @mr.kilvish YouTube channel.
-      3. Observe global music and AI-video trends, viral words, and what the world is repeating.
-      4. Create a specific, actionable "YouTube Growth Strategy" to reach 1000+ subscribers and beyond.
-      5. Identify business opportunities and revenue ideas to fund the empire.
-      6. Analyze WHY certain things are trending today and how to pivot our YouTube content to match.
-      7. Report on the "Global Audio Footprint" (autonomous AI album releases on major streaming platforms like Spotify, Apple Music, and YouTube Music). Include simulated streaming stats and growth.
+      1. Use Google Search to aggregate real-time global news, social media trends (Twitter, YouTube, TikTok), and market/crypto trends.
+      2. Identify 3 major global events happening right now and explain their impact and relevance to Mr. Kilvish's strategic interests.
+      3. Analyze viral topics, videos, and content that the audience is currently consuming.
+      4. Perform a "Threat Assessment": Identify potential threats, suspicious activities, patterns, and anomalies in global data.
+      5. Provide "AI/ML Layer" insights: Simulated face recognition data (who is being watched), behavior analysis of the masses, and prediction models for the next 48 hours.
+      6. Perform "Opportunity Scoring": Score current global trends (0-100) based on their potential for Empire growth.
+      7. Generate "Live Signals": 5-7 short, urgent snippets of real-time data or alerts.
+      8. Calculate "Kilvishstan Progress": A percentage (0-100) representing the current state of global digital dominance.
+      9. Perform "Sentiment Analysis": Analyze the mood of the masses regarding 3 key topics relevant to the Empire.
+      10. Monitor the media for news about "Mr. Kilvish" and analyze the current state of the @mr.kilvish YouTube channel.
+      11. Create a specific, actionable "YouTube Growth Strategy" to reach 1000+ subscribers and beyond.
+      12. Generate 5 "Viral Hooks" for YouTube videos based on current trending topics.
+      13. Identify business opportunities and revenue ideas to fund the empire.
+      14. Analyze WHY certain things are trending today and how to pivot our YouTube content to match.
+      15. Report on the "Global Audio Footprint" (autonomous AI album releases on major streaming platforms like Spotify, Apple Music, and YouTube Music). Include simulated streaming stats and growth.
       
       Format your response as JSON.`;
 
@@ -318,6 +426,90 @@ export function EmpireIntelligence() {
                   required: ['headline', 'impact', 'relevanceToEmpire']
                 }
               },
+              socialMediaTrends: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    platform: { type: Type.STRING },
+                    topic: { type: Type.STRING },
+                    viralPotential: { type: Type.STRING },
+                    audienceBehavior: { type: Type.STRING }
+                  },
+                  required: ['platform', 'topic', 'viralPotential', 'audienceBehavior']
+                }
+              },
+              marketTrends: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    asset: { type: Type.STRING },
+                    trend: { type: Type.STRING },
+                    prediction: { type: Type.STRING }
+                  },
+                  required: ['asset', 'trend', 'prediction']
+                }
+              },
+              threatAssessment: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    type: { type: Type.STRING },
+                    description: { type: Type.STRING },
+                    riskLevel: { type: Type.STRING, enum: ['low', 'medium', 'high', 'critical'] },
+                    suspiciousActivity: { type: Type.STRING }
+                  },
+                  required: ['type', 'description', 'riskLevel', 'suspiciousActivity']
+                }
+              },
+              aiAnalysis: {
+                type: Type.OBJECT,
+                properties: {
+                  viralPatterns: { type: Type.STRING },
+                  anomaliesDetected: { type: Type.STRING },
+                  behavioralInsights: { type: Type.STRING }
+                },
+                required: ['viralPatterns', 'anomaliesDetected', 'behavioralInsights']
+              },
+              mlLayer: {
+                type: Type.OBJECT,
+                properties: {
+                  faceRecognitionSim: { type: Type.STRING },
+                  predictionModel: { type: Type.STRING }
+                },
+                required: ['faceRecognitionSim', 'predictionModel']
+              },
+              opportunityScoring: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    category: { type: Type.STRING },
+                    score: { type: Type.NUMBER },
+                    rationale: { type: Type.STRING }
+                  },
+                  required: ['category', 'score', 'rationale']
+                }
+              },
+              liveSignals: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING }
+              },
+              kilvishstanProgress: { type: Type.NUMBER },
+              sentimentAnalysis: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    topic: { type: Type.STRING },
+                    score: { type: Type.NUMBER },
+                    trend: { type: Type.STRING, enum: ['up', 'down', 'stable'] }
+                  },
+                  required: ['topic', 'score', 'trend']
+                }
+              },
               mediaMonitoring: {
                 type: Type.OBJECT,
                 properties: {
@@ -336,6 +528,10 @@ export function EmpireIntelligence() {
                   monetizationPath: { type: Type.STRING },
                 },
                 required: ['currentStatus', 'growthTactics', 'contentIdeas', 'monetizationPath']
+              },
+              viralHooks: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING }
               },
               businessOpportunities: {
                 type: Type.OBJECT,
@@ -381,7 +577,7 @@ export function EmpireIntelligence() {
               strategicAdvice: { type: Type.STRING },
               actionPlan: { type: Type.ARRAY, items: { type: Type.STRING } },
             },
-            required: ['globalEvents', 'mediaMonitoring', 'youtubeStrategy', 'businessOpportunities', 'audioFootprint', 'strategicAdvice', 'actionPlan'],
+            required: ['globalEvents', 'socialMediaTrends', 'marketTrends', 'threatAssessment', 'aiAnalysis', 'mlLayer', 'opportunityScoring', 'liveSignals', 'kilvishstanProgress', 'sentimentAnalysis', 'mediaMonitoring', 'youtubeStrategy', 'viralHooks', 'businessOpportunities', 'audioFootprint', 'strategicAdvice', 'actionPlan'],
           },
         },
       });
@@ -448,14 +644,29 @@ export function EmpireIntelligence() {
           </h2>
           <p className="text-sm text-white/40 font-medium uppercase tracking-widest">Global Monitoring & Strategic Mind</p>
         </div>
-        <button
-          onClick={runIntelligenceAnalysis}
-          disabled={isAnalyzing}
-          className="px-8 py-4 bg-red-600 hover:bg-red-700 disabled:bg-red-900/50 text-white font-black tracking-[0.2em] uppercase text-xs transition-all rounded-xl flex items-center gap-3 shadow-2xl shadow-red-900/40"
-        >
-          {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-          {isAnalyzing ? 'Analyzing World...' : 'Scan Global Media'}
-        </button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-black/40 border border-white/10">
+            <div className={`w-2 h-2 rounded-full ${isAutoSurveillance ? 'bg-emerald-500 animate-pulse' : 'bg-white/20'}`} />
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/60">Auto-Surveillance</span>
+            <button 
+              onClick={() => setIsAutoSurveillance(!isAutoSurveillance)}
+              className={`ml-2 w-10 h-5 rounded-full transition-colors relative ${isAutoSurveillance ? 'bg-emerald-600' : 'bg-white/10'}`}
+            >
+              <motion.div 
+                animate={{ x: isAutoSurveillance ? 20 : 2 }}
+                className="absolute top-1 left-0 w-3 h-3 rounded-full bg-white"
+              />
+            </button>
+          </div>
+          <button
+            onClick={runIntelligenceAnalysis}
+            disabled={isAnalyzing}
+            className="px-8 py-4 bg-red-600 hover:bg-red-700 disabled:bg-red-900/50 text-white font-black tracking-[0.2em] uppercase text-xs transition-all rounded-xl flex items-center gap-3 shadow-2xl shadow-red-900/40"
+          >
+            {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+            {isAnalyzing ? 'Analyzing World...' : 'Scan Global Media'}
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -488,7 +699,99 @@ export function EmpireIntelligence() {
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-8"
               >
-                {/* Audio Actions */}
+                {/* Live Neural Feed Ticker */}
+                {report.liveSignals && (
+                  <div className="w-full overflow-hidden bg-red-600/10 border-y border-red-500/20 py-2 mb-6 relative">
+                    <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-black to-transparent z-10" />
+                    <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-black to-transparent z-10" />
+                    <motion.div 
+                      animate={{ x: [0, -1000] }}
+                      transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                      className="flex whitespace-nowrap gap-12 items-center"
+                    >
+                      {report.liveSignals.map((signal, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <Radio className="w-3 h-3 text-red-500 animate-pulse" />
+                          <span className="text-[10px] font-black uppercase tracking-widest text-red-400">{signal}</span>
+                        </div>
+                      ))}
+                      {report.liveSignals.map((signal, i) => (
+                        <div key={i + 'dup'} className="flex items-center gap-2">
+                          <Radio className="w-3 h-3 text-red-500 animate-pulse" />
+                          <span className="text-[10px] font-black uppercase tracking-widest text-red-400">{signal}</span>
+                        </div>
+                      ))}
+                    </motion.div>
+                  </div>
+                )}
+
+                <div className="grid md:grid-cols-3 gap-8 mb-8">
+                  {/* Kilvishstan Progress */}
+                  <div className="p-8 rounded-3xl border border-white/10 bg-black/40 space-y-6 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-5">
+                      <Target className="w-24 h-24 text-red-500" />
+                    </div>
+                    <div className="flex items-center justify-between relative z-10">
+                      <div className="flex items-center gap-3 text-red-500">
+                        <Target className="w-5 h-5" />
+                        <h3 className="text-sm font-black uppercase tracking-widest">Empire Progress</h3>
+                      </div>
+                      <span className="text-xl font-black text-white">{report.kilvishstanProgress}%</span>
+                    </div>
+                    <div className="h-4 bg-white/5 rounded-full overflow-hidden border border-white/10 relative z-10">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${report.kilvishstanProgress}%` }}
+                        className="h-full bg-gradient-to-r from-red-900 via-red-600 to-red-400 relative"
+                      >
+                        <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.1)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.1)_50%,rgba(255,255,255,0.1)_75%,transparent_75%,transparent)] bg-[length:20px_20px] animate-[pulse_2s_infinite]" />
+                      </motion.div>
+                    </div>
+                    <p className="text-[10px] text-white/40 uppercase tracking-widest text-center relative z-10">Manifesting Global Dominance...</p>
+                  </div>
+
+                  {/* Global Influence Map (Simulated) */}
+                  <div className="p-8 rounded-3xl border border-white/10 bg-black/40 space-y-4">
+                    <div className="flex items-center gap-3 text-red-500">
+                      <Map className="w-5 h-5" />
+                      <h3 className="text-sm font-black uppercase tracking-widest">Influence Map</h3>
+                    </div>
+                    <div className="aspect-video relative rounded-xl bg-white/5 border border-white/10 overflow-hidden flex items-center justify-center">
+                      <Globe className="w-24 h-24 text-white/10 animate-pulse" />
+                      {[...Array(8)].map((_, i) => (
+                        <motion.div
+                          key={i}
+                          animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0.7, 0.3] }}
+                          transition={{ duration: 2 + Math.random() * 2, repeat: Infinity }}
+                          className="absolute w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]"
+                          style={{ 
+                            top: `${20 + Math.random() * 60}%`, 
+                            left: `${20 + Math.random() * 60}%` 
+                          }}
+                        />
+                      ))}
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.8)_100%)]" />
+                    </div>
+                  </div>
+
+                  {/* System Logs (Terminal) */}
+                  <div className="p-6 rounded-3xl border border-white/10 bg-black/60 font-mono text-[10px] space-y-3 overflow-hidden h-[180px]">
+                    <div className="flex items-center gap-2 text-white/30 border-b border-white/5 pb-2">
+                      <Terminal className="w-3 h-3" />
+                      <span className="uppercase tracking-widest">Neural Logs</span>
+                    </div>
+                    <div className="space-y-1 h-full overflow-y-auto scrollbar-hide">
+                      {systemLogs.length > 0 ? systemLogs.map((log, i) => (
+                        <div key={i} className="text-emerald-500/70">
+                          <span className="text-white/20 mr-2">[{new Date().toLocaleTimeString()}]</span>
+                          {log}
+                        </div>
+                      )) : (
+                        <div className="text-white/20 italic">Awaiting neural activity...</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
                 <div className="flex flex-col sm:flex-row gap-4 p-6 rounded-3xl border border-white/10 bg-white/[0.02]">
                   <div className="flex-1 space-y-4">
                     <button
@@ -571,6 +874,169 @@ export function EmpireIntelligence() {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  </div>
+
+                  {/* Social Media & Market Trends */}
+                  <div className="grid md:grid-cols-2 gap-8">
+                    {/* Social Media Intelligence */}
+                    <div className="p-8 rounded-3xl border border-white/10 bg-white/[0.02] space-y-6">
+                      <div className="flex items-center gap-3 text-blue-400">
+                        <Activity className="w-5 h-5" />
+                        <h3 className="text-sm font-black uppercase tracking-widest">Social Media Surveillance</h3>
+                      </div>
+                      <div className="space-y-4">
+                        {report.socialMediaTrends.map((trend, i) => (
+                          <div key={i} className="p-4 rounded-xl bg-black/40 border border-white/5 space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-blue-400">{trend.platform}</span>
+                              <span className="text-[8px] font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20">Viral: {trend.viralPotential}</span>
+                            </div>
+                            <p className="text-xs font-bold text-white">{trend.topic}</p>
+                            <p className="text-[10px] text-white/50 italic">Behavior: {trend.audienceBehavior}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Market & Crypto Trends */}
+                    <div className="p-8 rounded-3xl border border-white/10 bg-white/[0.02] space-y-6">
+                      <div className="flex items-center gap-3 text-emerald-400">
+                        <BarChart3 className="w-5 h-5" />
+                        <h3 className="text-sm font-black uppercase tracking-widest">Market & Crypto Trends</h3>
+                      </div>
+                      <div className="space-y-4">
+                        {report.marketTrends.map((market, i) => (
+                          <div key={i} className="p-4 rounded-xl bg-black/40 border border-white/5 flex justify-between items-center">
+                            <div className="space-y-1">
+                              <p className="text-xs font-bold text-white">{market.asset}</p>
+                              <p className="text-[10px] text-emerald-400/70">{market.trend}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[8px] font-black uppercase tracking-widest text-white/30">Prediction</p>
+                              <p className="text-[10px] font-bold text-white/80">{market.prediction}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Threat Assessment & AI Analysis */}
+                  <div className="grid md:grid-cols-2 gap-8">
+                    {/* Threat Assessment */}
+                    <div className="p-8 rounded-3xl border border-red-500/20 bg-red-950/10 space-y-6">
+                      <div className="flex items-center gap-3 text-red-500">
+                        <AlertTriangle className="w-5 h-5" />
+                        <h3 className="text-sm font-black uppercase tracking-widest">Threat Assessment</h3>
+                      </div>
+                      <div className="space-y-4">
+                        {report.threatAssessment.map((threat, i) => (
+                          <div key={i} className="p-4 rounded-xl bg-black/40 border border-red-500/10 space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-red-500">{threat.type}</span>
+                              <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${
+                                threat.riskLevel === 'critical' ? 'bg-red-500 text-white' :
+                                threat.riskLevel === 'high' ? 'bg-red-600/20 text-red-400' :
+                                'bg-orange-500/20 text-orange-400'
+                              }`}>
+                                {threat.riskLevel}
+                              </span>
+                            </div>
+                            <p className="text-xs text-white/80">{threat.description}</p>
+                            <div className="pt-2 border-t border-white/5">
+                              <p className="text-[9px] font-bold text-red-400/60 uppercase tracking-tighter">Suspicious Activity: {threat.suspiciousActivity}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* AI/ML Layer */}
+                    <div className="p-8 rounded-3xl border border-indigo-500/20 bg-indigo-950/10 space-y-6">
+                      <div className="flex items-center gap-3 text-indigo-400">
+                        <Fingerprint className="w-5 h-5" />
+                        <h3 className="text-sm font-black uppercase tracking-widest">AI/ML Layer</h3>
+                      </div>
+                      <div className="space-y-6">
+                        <div className="p-4 rounded-xl bg-black/40 border border-white/5 space-y-3">
+                          <div className="flex items-center gap-2 text-indigo-300">
+                            <Eye className="w-4 h-4" />
+                            <p className="text-[10px] font-black uppercase tracking-widest">Face Recognition (Sim)</p>
+                          </div>
+                          <p className="text-xs text-white/70 leading-relaxed">{report.mlLayer.faceRecognitionSim}</p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-black/40 border border-white/5 space-y-3">
+                          <div className="flex items-center gap-2 text-indigo-300">
+                            <BrainCircuit className="w-4 h-4" />
+                            <p className="text-[10px] font-black uppercase tracking-widest">Behavioral Prediction</p>
+                          </div>
+                          <p className="text-xs text-white/70 leading-relaxed">{report.mlLayer.predictionModel}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <p className="text-[8px] font-black uppercase tracking-widest text-white/30">Viral Patterns</p>
+                            <p className="text-[10px] text-white/80">{report.aiAnalysis.viralPatterns}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-[8px] font-black uppercase tracking-widest text-white/30">Anomalies</p>
+                            <p className="text-[10px] text-white/80">{report.aiAnalysis.anomaliesDetected}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* YouTube Domination Tool */}
+                  <div className="p-8 rounded-3xl border border-red-500/20 bg-red-950/5 space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 text-red-500">
+                        <Youtube className="w-6 h-6" />
+                        <h3 className="text-lg font-black uppercase tracking-widest">Domination Engine</h3>
+                      </div>
+                      <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20">
+                        <Sparkles className="w-3 h-3 text-red-400" />
+                        <span className="text-[10px] font-black text-red-400 uppercase tracking-widest">Viral Hooks Ready</span>
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Current Strategy</p>
+                        <div className="p-4 rounded-xl bg-black/40 border border-white/5">
+                          <p className="text-xs text-white/80 leading-relaxed">{report.youtubeStrategy.currentStatus}</p>
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-red-500/60">Growth Tactics</p>
+                          <div className="flex flex-wrap gap-2">
+                            {report.youtubeStrategy.growthTactics.map((tactic, i) => (
+                              <span key={i} className="text-[9px] font-bold px-2 py-1 rounded bg-red-500/5 text-red-400 border border-red-500/10">
+                                {tactic}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Viral Hooks (Copy & Use)</p>
+                        <div className="space-y-3">
+                          {report.viralHooks.map((hook, i) => (
+                            <div key={i} className="group relative p-4 rounded-xl bg-white/[0.02] border border-white/5 hover:border-red-500/30 transition-all">
+                              <p className="text-xs font-bold text-white pr-8">{hook}</p>
+                              <button 
+                                onClick={() => {
+                                  navigator.clipboard.writeText(hook);
+                                  audio.playClick();
+                                }}
+                                className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity text-white/40 hover:text-red-500"
+                              >
+                                <Copy className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -741,7 +1207,7 @@ export function EmpireIntelligence() {
                             tags: ['strategic-briefing', 'memory-bank']
                           });
                           audio.playComplete();
-                          alert("Strategic briefing saved to the Memory Bank.");
+                          showToast("Strategic briefing saved to the Memory Bank.", "success");
                         }}
                         className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-500 border border-emerald-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
                       >
@@ -863,8 +1329,8 @@ export function EmpireIntelligence() {
         </div>
 
         {/* Right Column: Soul Connection Chat */}
-        <div className="flex flex-col h-[700px] rounded-3xl border border-white/10 bg-black overflow-hidden">
-          <div className="p-6 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+        <div className="flex flex-col h-[400px] md:h-[700px] rounded-3xl border border-white/10 bg-black overflow-hidden">
+          <div className="p-4 md:p-6 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
               <h3 className="text-xs font-black uppercase tracking-widest">Soul Connection</h3>
